@@ -17,17 +17,19 @@ def send(msg, client):
     client.send(message)
     print(client.recv(2048).decode(FORMAT))
 
+
 def main():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(ADDR)
 
-    send("Hello World!", client)
-    input()
-    send("Hello Domroon!", client)
-    input()
-    send("Its working!!!", client)
-    input()
-    send(DISCONNECT_MESSAGE, client)
+    message = ""
+    while message != DISCONNECT_MESSAGE:
+        if message == 'exit':
+            send(DISCONNECT_MESSAGE, client)
+            break
+        message = input()
+        send(message, client)
+
 
 if __name__ == '__main__':
     main()
