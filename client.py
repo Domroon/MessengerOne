@@ -21,6 +21,12 @@ def main():
     client.connect(ADDR)
 
     send("Hello World!", client)
+    input()
+    send("Hello Domroon!", client)
+    input()
+    send("Its working!!!", client)
+    input()
+    send(DISCONNECT_MESSAGE, client)
 
 if __name__ == '__main__':
     main()
