@@ -15,6 +15,7 @@ def send(msg, client):
     send_length += b' ' * (HEADER - len(send_length))
     client.send(send_length)
     client.send(message)
+    print(client.recv(2048).decode(FORMAT))
 
 def main():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
