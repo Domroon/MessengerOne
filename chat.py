@@ -19,6 +19,13 @@ def main():
     print(f"[LISTENING] Server is listening on {SERVER}")
 
     conn, addr = server.accept()
+    print(f"[NEW CONNECTION] {addr} connected.")
+
+    msg_length = conn.recv(HEADER).decode(FORMAT)
+    if msg_length:
+        msg_length = int(msg_length)
+        msg = conn.recv(msg_length).decode(FORMAT)
+        print(msg)
 
 
 if __name__ == '__main__':
