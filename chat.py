@@ -1,8 +1,10 @@
 import socket 
 import threading
+import time
 
 HEADER = 64
 PORT = 5050
+PORT_2 = 5051
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDR = (SERVER, PORT)
 FORMAT = 'utf-8'
@@ -13,6 +15,8 @@ class Chat:
     def __init__(self):
         self.message = ""
         self.target_ip = 0
+        self.receive_target_connected = False
+        self.transreceive_target_connected = False
 
     def receive_message(self, conn):
         msg_length = conn.recv(HEADER).decode(FORMAT)
@@ -29,9 +33,9 @@ class Chat:
         conn.send(send_length)
         conn.send(message)
 
-    def receive(self):
+    def receive(self, port):
         receive_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        receive_socket.bind(ADDR)
+        receive_socket.bind((SERVER, port))
 
         print("[STARTING] Receiver is starting...")
         
@@ -39,7 +43,11 @@ class Chat:
         print(f"[LISTENING] Receiver is listening on {SERVER}:{PORT}")
 
         conn, addr = receive_socket.accept()
-        self.target_ip = addr
+
+        self.target_ip, port = addr # save ip for transceive socket
+        self.receive_target_connected = True # set connection status for transceive socket
+        self.transreceive_target_connected = True
+
         print(f"[NEW CONNECTION] {addr} connected.")
         while True:
             self.message = self.receive_message(conn)
@@ -48,9 +56,13 @@ class Chat:
                 conn.close()
                 break
 
-    def transreceive(self, ip_adress):
+    def transreceive(self, ip_adress, port):
         transreceive_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        transreceive_socket.connect((ip_adress, PORT))
+        transreceive_socket.connect((ip_adress, port))
+
+        print("[STARTING] Transceiver ist starting...")
+
+        self.transreceive_target_connected = True #set connection status for receive socket
 
         print(f"[CONNECTED] Transceiver connected to {ip_adress}")
         name = input("Enter your Nickname: ")
@@ -63,19 +75,29 @@ class Chat:
                 break
 
     def wait_client(self):
-        receive_thread = threading.Thread(target=self.receive)
+        receive_thread = threading.Thread(target=self.receive(PORT))
         receive_thread.start()
+        print(self.target_ip)
+        transceiver_thread = threading.Thread(target=self.transreceive(self.target_ip, PORT_2))
+        transceiver_thread.start()
+        
 
     def search_client(self):
         ip_adress = input("IP ADRESS: ")
-        transceive_thread = threading.Thread(target=self.transreceive(ip_adress))
+        transceive_thread = threading.Thread(target=self.transreceive(ip_adress, PORT))
         transceive_thread.start()
+
+        while True:
+            if self.transreceive_target_connected:
+                receive_thread = threading.Thread(target=self.receive(PORT_2))
+                receive_thread.start()
+                break
 
 
 def main():
     chat = Chat()
     
-    print("1 - Receiver\n2 - Transreceiver")
+    print("1 - Wait Client\n2 - Search Client")
     choice = input("Input: ")
     if choice == '1':
         chat.wait_client()
