@@ -78,9 +78,12 @@ class Chat:
         port=5050
         receive_thread = threading.Thread(target=self.receive, args=([PORT]))
         receive_thread.start()
-        time.sleep(15)
-        transceiver_thread = threading.Thread(target=self.transreceive, args=([str(self.target_ip), PORT_2]))
-        transceiver_thread.start()
+        
+        while True:
+            if self.receive_target_connected:
+                transceiver_thread = threading.Thread(target=self.transreceive, args=([str(self.target_ip), PORT_2]))
+                transceiver_thread.start()
+                break
         
 
     def search_client(self):
