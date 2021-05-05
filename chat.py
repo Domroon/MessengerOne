@@ -1,4 +1,3 @@
-from server import DISCONNECT_MESSAGE
 import socket 
 import threading
 
@@ -64,22 +63,24 @@ class Chat:
                 break
 
     def wait_client(self):
-        self.receive()
+        receive_thread = threading.Thread(target=self.receive)
+        receive_thread.start()
 
     def search_client(self):
-        pass
+        ip_adress = input("IP ADRESS: ")
+        transceive_thread = threading.Thread(target=self.transreceive(ip_adress))
+        transceive_thread.start()
 
 
 def main():
     chat = Chat()
-    #chat.wait_client()
     
     print("1 - Receiver\n2 - Transreceiver")
     choice = input("Input: ")
     if choice == '1':
-        chat.receive()
+        chat.wait_client()
     elif choice == '2':
-        chat.transreceive(input("IP Adress: "))
+        chat.search_client()
     else:
         print("Wrong Input")
     
