@@ -67,7 +67,7 @@ class Chat:
         print(f"[CONNECTED] Transceiver connected to {ip_adress}")
         name = input("Enter your Nickname: ")
         while True:
-            user_msg = input('Message: ')
+            user_msg = input('Message: \n')
             msg = f"{name}: {user_msg}"
             self.send_message(transreceive_socket, msg)
             if user_msg == "exit":
@@ -75,21 +75,22 @@ class Chat:
                 break
 
     def wait_client(self):
-        receive_thread = threading.Thread(target=self.receive(PORT))
+        port=5050
+        receive_thread = threading.Thread(target=self.receive, args=([PORT]))
         receive_thread.start()
-        print(self.target_ip)
-        transceiver_thread = threading.Thread(target=self.transreceive(self.target_ip, PORT_2))
+        time.sleep(15)
+        transceiver_thread = threading.Thread(target=self.transreceive, args=([str(self.target_ip), PORT_2]))
         transceiver_thread.start()
         
 
     def search_client(self):
         ip_adress = input("IP ADRESS: ")
-        transceive_thread = threading.Thread(target=self.transreceive(ip_adress, PORT))
+        transceive_thread = threading.Thread(target=self.transreceive, args=([str(ip_adress), PORT]))
         transceive_thread.start()
 
         while True:
             if self.transreceive_target_connected:
-                receive_thread = threading.Thread(target=self.receive(PORT_2))
+                receive_thread = threading.Thread(target=self.receive, args=([PORT_2]))
                 receive_thread.start()
                 break
 
