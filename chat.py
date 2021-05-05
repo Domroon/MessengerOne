@@ -36,19 +36,16 @@ class Chat:
     def receive(self, port):
         receive_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         receive_socket.bind((SERVER, port))
-
         print("[STARTING] Receiver is starting...")
         
         receive_socket.listen()
         print(f"[LISTENING] Receiver is listening on {SERVER}:{PORT}")
 
         conn, addr = receive_socket.accept()
-
         self.target_ip, port = addr # save ip for transceive socket
         self.receive_target_connected = True # set connection status for transceive socket
-        self.transreceive_target_connected = True
+        print(f"[CONNECTED] Receiver connected to {self.target_ip}:{port}")
 
-        print(f"[NEW CONNECTION] {addr} connected.")
         while True:
             self.message = self.receive_message(conn)
             print(self.message)
@@ -56,39 +53,38 @@ class Chat:
                 conn.close()
                 break
 
-    def transreceive(self, ip_adress, port):
+    def transreceive(self, ip_adress, port, name):
         transreceive_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        transreceive_socket.connect((ip_adress, port))
-
         print("[STARTING] Transceiver ist starting...")
 
+        transreceive_socket.connect((ip_adress, port))
         self.transreceive_target_connected = True #set connection status for receive socket
+        print(f"[CONNECTED] Transceiver connected to {ip_adress}:{port}")
 
-        print(f"[CONNECTED] Transceiver connected to {ip_adress}")
-        name = input("Enter your Nickname: ")
         while True:
-            user_msg = input('Message: \n')
-            msg = f"{name}: {user_msg}"
+            user_msg = input()
+            msg = f"\n{name}: {user_msg}"
             self.send_message(transreceive_socket, msg)
             if user_msg == "exit":
                 self.send_message(transreceive_socket, DISCONNECT_MESSAGE)
                 break
 
     def wait_client(self):
-        port=5050
+        name = input("Enter your Nickname: ")
         receive_thread = threading.Thread(target=self.receive, args=([PORT]))
         receive_thread.start()
-        
+
         while True:
             if self.receive_target_connected:
-                transceiver_thread = threading.Thread(target=self.transreceive, args=([str(self.target_ip), PORT_2]))
+                transceiver_thread = threading.Thread(target=self.transreceive, args=([str(self.target_ip), PORT_2, name]))
                 transceiver_thread.start()
                 break
         
 
     def search_client(self):
-        ip_adress = input("IP ADRESS: ")
-        transceive_thread = threading.Thread(target=self.transreceive, args=([str(ip_adress), PORT]))
+        name = input("Enter your Nickname: ")
+        ip_adress = input("IP Address: ")
+        transceive_thread = threading.Thread(target=self.transreceive, args=([str(ip_adress), PORT, name]))
         transceive_thread.start()
 
         while True:
