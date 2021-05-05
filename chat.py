@@ -39,10 +39,10 @@ class Chat:
         print("[STARTING] Receiver is starting...")
         
         receive_socket.listen()
-        print(f"[LISTENING] Receiver is listening on {SERVER}:{PORT}")
+        print(f"[LISTENING] Receiver is listening on {SERVER}:{port}")
 
         conn, addr = receive_socket.accept()
-        self.target_ip, port = addr # save ip for transceive socket
+        self.target_ip, conn_port = addr # save ip for transceive socket
         self.receive_target_connected = True # set connection status for transceive socket
         print(f"[CONNECTED] Receiver connected to {self.target_ip}:{port}")
 
@@ -79,7 +79,6 @@ class Chat:
                 transceiver_thread = threading.Thread(target=self.transreceive, args=([str(self.target_ip), PORT_2, name]))
                 transceiver_thread.start()
                 break
-        
 
     def search_client(self):
         name = input("Enter your Nickname: ")
@@ -106,7 +105,6 @@ def main():
     else:
         print("Wrong Input")
     
-
 
 if __name__ == '__main__':
     main()
