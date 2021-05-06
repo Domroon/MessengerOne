@@ -8,6 +8,7 @@ class Host:
         self.header = 64
         self.format = 'utf-8'
         self.disconnect_message = "!DISCONNECT"
+        self.client_nickname = None
 
     def start_server(self):
         print("[STARTING] Server is starting...")
@@ -26,20 +27,30 @@ class Host:
         client_ip, client_port = client_ip_port
         print(f"[NEW CONNECTION] {client_ip}:{client_port}")
 
+        # first: client sending an empty header that have the length 'header - message_length'
+        # communication_socket receive it
+        message_header = communication_socket.recv(self.header).decode(self.format)
+
+        # second: client will sending the message; communication socket receive it
+        # first message is always the nickname
+        if message_header: # if not None
+                message_length = int(message_header)
+                self.client_nickname = communication_socket.recv(message_length).decode(self.format)
+
+        # Host can now receive messages from this client
         while True:
-            # first: client sending an empty header that have the length 'header - message_length'
-            # communication_socket receive it
+            # first: receive header
             message_header = communication_socket.recv(self.header).decode(self.format) 
 
-            # second: client will sending the message; communication socket receive it
+            # second: receive message
             if message_header: # if not None
                 message_length = int(message_header)
                 message = communication_socket.recv(message_length).decode(self.format)
                 if message == self.disconnect_message:
-                    print(f"[DISCONNECT] 'client_nickname' ({client_ip}:{client_port}) disconnected")
+                    print(f"[DISCONNECT] '{self.client_nickname}' ({client_ip}:{client_port}) disconnected")
                     break
 
-                print(f"[RECEIVE] 'client_nickname' ({client_ip}:{client_port}) send a message:")
+                print(f"[RECEIVE] '{self.client_nickname}' ({client_ip}:{client_port}) send a message:")
                 print(f"{message}")
 
                 # HERE: save message in an list an send it to all clients!
@@ -50,12 +61,13 @@ class Host:
 
 
 class Client:
-    def __init__(self, host_ip_address, host_port):
+    def __init__(self, host_ip_address, host_port, nickname):
         self.host_ip_address = host_ip_address
         self.host_port = host_port
         self.format = 'utf-8'
         self.header = '64'
         self.disconnect_message = "!DISCONNECT"
+        self.nickname = nickname
 
     def start_client(self):
         print("[STARTING] Client is starting...")
@@ -67,7 +79,10 @@ class Client:
 
         print(f"[CONNECTED] Connected with host ({self.host_ip_address}:{self.host_port})")
 
-        message = ""
+        # first message is always the nickname
+        self.send_message(self.nickname, communication_socket)
+
+        # now the client can send messages
         while True:
             message = input()
             if message == 'exit':
@@ -99,9 +114,10 @@ def main():
         host = Host(host_ip_address, host_port)
         host.start_server()
     elif user_input == '2':
+        nickname = input("Enter a nickname: ")
         host_ip_address = input("Host IP: ")
         host_port = 50500
-        client = Client(host_ip_address, host_port)
+        client = Client(host_ip_address, host_port, nickname)
         client.start_client()
     else:
         print("Wrong Input.")
