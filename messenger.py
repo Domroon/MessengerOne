@@ -1,5 +1,6 @@
 import socket
 import threading
+import subprocess
 
 class Host:
     def __init__(self, ip_address, port):
@@ -9,6 +10,8 @@ class Host:
         self.format = 'utf-8'
         self.disconnect_message = "!DISCONNECT"
         self.client_nickname = None
+        self.messages = []
+        self.connections = []
 
     def start_server(self):
         print("[STARTING] Server is starting...")
@@ -26,6 +29,10 @@ class Host:
     def handle_client(self, communication_socket, client_ip_port):
         client_ip, client_port = client_ip_port
         print(f"[NEW CONNECTION] Communication - Socket from client at {client_ip}:{client_port}")
+        self.connections.append(client_ip_port)
+
+        #only for testing: show connections
+        print(self.connections)
 
         # first: client sending an empty header that have the length 'header - message_length'
         # communication_socket receive it
@@ -48,16 +55,30 @@ class Host:
                 message = communication_socket.recv(message_length).decode(self.format)
                 if message == self.disconnect_message:
                     print(f"[DISCONNECT] '{self.client_nickname}' ({client_ip}:{client_port}) disconnected")
+                    self.connections.remove(client_ip_port)
+
+                    #only for testing: show connections list
+                    print(self.connections)
+
                     break
 
                 print(f"[RECEIVE] '{self.client_nickname}' ({client_ip}:{client_port}) send a message:")
                 print(f"{message}")
 
                 # HERE: save message in an list an send it to all clients!
+                send_message = f"{self.client_nickname}: {message}"
+                self.messages.append(send_message)
+                # only for testing: show message list
+                print(f"[MESSAGES LIST]")
+                print(self.messages)
 
                 # for testing: send message back to client
         
         communication_socket.close()
+
+    def sending_messages():
+        #this should be a new Thread that sends every message in the messages list to every ip_address in connections list
+        pass
 
 
 class Client:
