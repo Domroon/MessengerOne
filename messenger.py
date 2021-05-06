@@ -54,6 +54,7 @@ class Client:
         self.host_port = host_port
         self.format = 'utf-8'
         self.header = '64'
+        self.disconnect_message = "!DISCONNECT"
 
     def start_client(self):
         print("[STARTING] Client is starting...")
@@ -63,6 +64,15 @@ class Client:
         communication_socket.connect(self.host_ip_address, self.host_port)
 
         print(f"[CONNECTED] Connected with host ({self.host_ip_address}:{self.host_port})")
+
+        message = ""
+        while True:
+            message = input()
+            if message == 'exit':
+                self.send_message(self.disconnect_message, communication_socket)
+                break
+
+            self.send_message(message, communication_socket)
 
     def send_message(self, msg, communication_socket):
         # first: client sending an empty header that have the length 'header - message_length'
@@ -87,7 +97,10 @@ def main():
         host = Host()
         host.start_server(host_ip_address, host_port)
     elif input == '2':
-        pass
+        host_ip_address = input("Host IP: ")
+        host_port = 50500
+        client = Client()
+        client.start_client()
     else:
         print("Wrong Input.")
 
