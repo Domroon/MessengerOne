@@ -25,7 +25,7 @@ class Host:
 
     def handle_client(self, communication_socket, client_ip_port):
         client_ip, client_port = client_ip_port
-        print(f"[NEW CONNECTION] {client_ip}:{client_port}")
+        print(f"[NEW CONNECTION] Communication - Socket from client at {client_ip}:{client_port}")
 
         # first: client sending an empty header that have the length 'header - message_length'
         # communication_socket receive it
