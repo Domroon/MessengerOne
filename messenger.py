@@ -49,3 +49,20 @@ class Host:
         communication_socket.close()
 
                
+def main():
+    print("1 - HOST\n2 - CLIENT")
+    input = input()
+
+    if input == '1':
+        host_ip_address = socket.gethostbyname(socket.gethostname())
+        host_port = 50500
+        host = Host()
+        host.start_server(host_ip_address, host_port)
+    elif input == '2':
+        pass
+    else:
+        print("Wrong Input.")
+
+
+if __name__ == '__main__':
+    main()
