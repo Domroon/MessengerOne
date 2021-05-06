@@ -36,6 +36,7 @@ class Host:
                 message_length = int(message_header)
                 message = communication_socket.recv(message_length).decode(self.format)
                 if message == self.disconnect_message:
+                    print(f"[DISCONNECT] 'client_nickname' ({client_ip}:{client_port}) disconnected")
                     break
 
                 print(f"[RECEIVE] 'client_nickname' ({client_ip}:{client_port}) send a message:")
