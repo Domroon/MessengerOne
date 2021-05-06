@@ -85,7 +85,7 @@ class Client:
         communication_socket.send(send_length)
 
         # second: client will sending the message
-        message = msg.encode(message)
+        communication_socket.send(message)
 
 
 def main():
