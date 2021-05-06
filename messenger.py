@@ -27,19 +27,18 @@ class Host:
         print(f"[NEW CONNECTION] {client_ip}:{client_port}")
 
         while True:
-            # first: client is sending how long the message will be (header); communication socket receive it
-            client_header = communication_socket.recv(self.header).decode(self.format) 
+            # first: client sending an empty header that have the length 'header - message_length'
+            # communication_socket receive it
+            message_header = communication_socket.recv(self.header).decode(self.format) 
 
-            # second: client is sending the nickname; communication socket receive it
-            # third: client will sending the message; communication socket receive it
-            if client_header: # if not None
-                message_length = int(client_header)
-                client_nickname = communication_socket.recv(message_length).decode(self.format)
+            # second: client will sending the message; communication socket receive it
+            if message_header: # if not None
+                message_length = int(message_header)
                 message = communication_socket.recv(message_length).decode(self.format)
                 if message == self.disconnect_message:
                     break
 
-                print(f"[RECEIVE] '{client_nickname}' ({client_ip}:{client_port}) send a message:")
+                print(f"[RECEIVE] 'client_nickname' ({client_ip}:{client_port}) send a message:")
                 print(f"{message}")
 
                 # HERE: save message in an list an send it to all clients!
@@ -48,7 +47,36 @@ class Host:
         
         communication_socket.close()
 
-               
+
+class Client:
+    def __init__(self, host_ip_address, host_port):
+        self.host_ip_address = host_ip_address
+        self.host_port = host_port
+        self.format = 'utf-8'
+        self.header = '64'
+
+    def start_client(self):
+        print("[STARTING] Client is starting...")
+        communication_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # try accept block around this should make sense
+        communication_socket.connect(self.host_ip_address, self.host_port)
+
+        print(f"[CONNECTED] Connected with host ({self.host_ip_address}:{self.host_port})")
+
+    def send_message(self, msg, communication_socket):
+        # first: client sending an empty header that have the length 'header - message_length'
+        message = msg.encode(self.format)
+
+        message_length = len(message)
+        send_length = str(message_length).encode(self.format)
+        send_length += b' ' * (int(self.header) - len(send_length))
+        communication_socket.send(send_length)
+
+        # second: client will sending the message
+        message = msg.encode(message)
+
+
 def main():
     print("1 - HOST\n2 - CLIENT")
     input = input()
