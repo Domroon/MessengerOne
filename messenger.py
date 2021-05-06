@@ -61,7 +61,8 @@ class Client:
         communication_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # try accept block around this should make sense
-        communication_socket.connect(self.host_ip_address, self.host_port)
+        # for timeout error(no computer on the other end) or ConnectionRefusedError(no listener on port)
+        communication_socket.connect((self.host_ip_address, self.host_port))
 
         print(f"[CONNECTED] Connected with host ({self.host_ip_address}:{self.host_port})")
 
@@ -89,17 +90,17 @@ class Client:
 
 def main():
     print("1 - HOST\n2 - CLIENT")
-    input = input()
+    user_input = input()
 
-    if input == '1':
+    if user_input == '1':
         host_ip_address = socket.gethostbyname(socket.gethostname())
         host_port = 50500
-        host = Host()
-        host.start_server(host_ip_address, host_port)
-    elif input == '2':
+        host = Host(host_ip_address, host_port)
+        host.start_server()
+    elif user_input == '2':
         host_ip_address = input("Host IP: ")
         host_port = 50500
-        client = Client()
+        client = Client(host_ip_address, host_port)
         client.start_client()
     else:
         print("Wrong Input.")
