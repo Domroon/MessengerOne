@@ -87,10 +87,10 @@ class Client:
         port = int(input("Port: "))
 
         self.communication_socket.connect((ip_address, port))
-        print(f"[CONNECTED] Connected with server ('{ip_address}':{port})")
-
         # Receiving Welcome Message
         print(self.receive_message())
+
+        print(f"[CONNECTED] Connected with server ('{ip_address}':{port})")
 
         # User can send messages
         while True:
