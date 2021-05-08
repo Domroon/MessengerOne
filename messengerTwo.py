@@ -9,12 +9,18 @@ class Server:
         # self.connections = []
         # self.messages = []
 
-    def receive_message(self, communication_socket):
+    def receive_message(self, communication_socket, address):
         message = ""
         receive_message = True
         while receive_message:
             #receive 20 bytes
-            bytes = communication_socket.recv(20)
+            try:
+                bytes = communication_socket.recv(20)
+            except ConnectionResetError:
+                print(f"[DISCONNECT] Client {address} disconnected")
+                communication_socket.close()
+                exit()
+
             # decode the bytes to utf-8 and search for newline-sign
             bytes_decoded = bytes.decode("utf-8")
             for sign in bytes_decoded:
@@ -49,7 +55,7 @@ class Server:
 
         # Server receive messages from this client
         while True:
-            client_message = self.receive_message(communication_socket)
+            client_message = self.receive_message(communication_socket, address)
             if client_message == "!DISCONNECT":
                 print(f"[DISCONNECT] Client {address} disconnected")
                 self.send_message("[SERVER] Bye! We hope to see you again soon :)", communication_socket)
