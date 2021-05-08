@@ -18,6 +18,7 @@ class Server:
                 bytes = communication_socket.recv(20)
             except ConnectionResetError:
                 print(f"[DISCONNECT] Client {address} disconnected")
+                print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 2}")
                 communication_socket.close()
                 exit()
 
@@ -48,6 +49,7 @@ class Server:
             print(f"[NEW CONNECTION] Connected with {address}")
             thread = threading.Thread(target=self.handle_client, args=(communication_socket, address))
             thread.start()
+            print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
 
     def handle_client(self, communication_socket, address):
         # Server sending the welcome message
@@ -59,7 +61,9 @@ class Server:
             if client_message == "!DISCONNECT":
                 print(f"[DISCONNECT] Client {address} disconnected")
                 self.send_message("[SERVER] Bye! We hope to see you again soon :)", communication_socket)
-                break
+                print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 2}")
+                communication_socket.close()
+                exit()
             print(f"[RECEIVE] from {address}: {client_message}")
 
 
