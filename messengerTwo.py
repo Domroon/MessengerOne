@@ -91,18 +91,11 @@ class Client:
                 self.communication_socket.connect((ip_address, port))
                 break
             except TimeoutError:
-                print(f"Cant't connect to {ip_address}:{port}")
+                print(f"\nCant't connect to {ip_address}:{port}")
                 print("The server is probably not online.")
-                print("Do you want to try it again?")
-                print("y - Yes")
-                print("n - No")
-                user_input = input()
-                if user_input == 'y':
-                    pass
-                elif user_input == 'n':
-                    exit()
+                self.user_query()
             except ConnectionRefusedError:
-                print(f"I can connect to {ip_address},")
+                print(f"\nI can connect to {ip_address},")
                 print(f"but no server is listening on port {port}")
                 self.user_query()
 
