@@ -13,8 +13,8 @@ class Server:
         message = ""
         receive_message = True
         while receive_message:
-            #receive 2 bytes
-            bytes = communication_socket.recv(2)
+            #receive 20 bytes
+            bytes = communication_socket.recv(20)
             # decode the bytes to utf-8 and search for newline-sign
             bytes_decoded = bytes.decode("utf-8")
             for sign in bytes_decoded:
@@ -50,10 +50,11 @@ class Server:
         # Server receive messages from this client
         while True:
             client_message = self.receive_message(communication_socket)
-            print(client_message)
             if client_message == "!DISCONNECT":
                 print(f"[DISCONNECT] Client {address} disconnected")
+                self.send_message("[SERVER] Bye! We hope to see you again soon :)", communication_socket)
                 break
+            print(f"[RECEIVE] from {address}: {client_message}")
 
 
 class Client:
@@ -93,7 +94,14 @@ class Client:
 
         # User can send messages
         while True:
-            self.send_message(input())
+            user_message = input()
+            self.send_message(user_message)
+            if user_message == 'q':
+                self.send_message("!DISCONNECT")
+                print(self.receive_message())
+                break
+        
+        self.communication_socket.close()
 
 def main():
     print("1 - SERVER \n 2 - CLIENT \n")
