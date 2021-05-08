@@ -101,6 +101,10 @@ class Client:
                     pass
                 elif user_input == 'n':
                     exit()
+            except ConnectionRefusedError:
+                print(f"I can connect to {ip_address},")
+                print(f"but no server is listening on port {port}")
+                self.user_query()
 
         # Receiving Welcome Message
         print(self.receive_message())
@@ -118,8 +122,18 @@ class Client:
         
         self.communication_socket.close()
 
+    def user_query(self):
+        print("Do you want to try it again?")
+        print("y - Yes")
+        print("n - No")
+        user_input = input()
+        if user_input == 'y':
+            return
+        elif user_input == 'n':
+            exit()
+
 def main():
-    print("1 - SERVER \n 2 - CLIENT \n")
+    print("1 - SERVER \n2 - CLIENT \n")
     user_input = input()
     if user_input == '1':
         server = Server()
