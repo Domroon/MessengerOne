@@ -86,7 +86,22 @@ class Client:
         ip_address = input("IP Address: ")
         port = int(input("Port: "))
 
-        self.communication_socket.connect((ip_address, port))
+        while True:
+            try:
+                self.communication_socket.connect((ip_address, port))
+                break
+            except TimeoutError:
+                print(f"Cant't connect to {ip_address}:{port}")
+                print("The server is probably not online.")
+                print("Do you want to try it again?")
+                print("y - Yes")
+                print("n - No")
+                user_input = input()
+                if user_input == 'y':
+                    pass
+                elif user_input == 'n':
+                    exit()
+
         # Receiving Welcome Message
         print(self.receive_message())
 
