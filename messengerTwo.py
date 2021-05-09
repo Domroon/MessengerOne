@@ -62,6 +62,33 @@ class Client:
         ip_address = input("IP Address: ")
         port = int(input("Port: "))
 
+        self.connect(ip_address, port)
+
+        # Receiving Welcome Message
+        print(receive_message(self.communication_socket, (ip_address, port)))
+
+        print(f"[CONNECTED] Connected with server ('{ip_address}':{port})")
+
+        # User can send messages
+        while True:
+            try:
+                user_message = input()
+                send_message(user_message, self.communication_socket)
+                if user_message == 'q':
+                    send_message("!DISCONNECT", self.communication_socket)
+                    print(receive_message(self.communication_socket, (ip_address, port)))
+                    break
+            except ConnectionResetError:
+                self.communication_socket.close()
+                print("Connection to the server was disconnected")
+                self.user_query()
+                self.communication_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.connect(ip_address, port)
+                print(f"[CONNECTED] Connected with server ('{ip_address}':{port})")
+                
+        self.communication_socket.close()
+
+    def connect(self, ip_address, port):
         while True:
             try:
                 self.communication_socket.connect((ip_address, port))
@@ -74,22 +101,6 @@ class Client:
                 print(f"\nI can connect to {ip_address},")
                 print(f"but no server is listening on port {port}")
                 self.user_query()
-
-        # Receiving Welcome Message
-        print(receive_message(self.communication_socket, (ip_address, port)))
-
-        print(f"[CONNECTED] Connected with server ('{ip_address}':{port})")
-
-        # User can send messages
-        while True:
-            user_message = input()
-            send_message(user_message, self.communication_socket)
-            if user_message == 'q':
-                send_message("!DISCONNECT", self.communication_socket)
-                print(receive_message(self.communication_socket, (ip_address, port)))
-                break
-        
-        self.communication_socket.close()
 
     def user_query(self):
         print("Do you want to try it again?")
@@ -148,27 +159,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-"""
-message = ""
-    receive_message = True
-    while receive_message:
-        #receive 20 bytes
-        try:
-            bytes = communication_socket.recv(20)
-        except ConnectionResetError:
-            print(f"[DISCONNECT] Client {address} disconnected")
-            print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 2}")
-            communication_socket.close()
-            exit()
-
-        # decode the bytes to utf-8 and search for newline-sign
-        bytes_decoded = bytes.decode("utf-8")
-        for sign in bytes_decoded:
-            if sign == "\n":
-                bytes_decoded = bytes_decoded[:-1]
-                receive_message = False
-        message += bytes_decoded
-    return message
-"""
