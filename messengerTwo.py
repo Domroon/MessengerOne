@@ -92,31 +92,42 @@ class Client:
 
 
 def receive_message(communication_socket, address):
-        message = ""
-        receive_message = True
-        while receive_message:
-            #receive 20 bytes
-            try:
-                bytes = communication_socket.recv(20)
-            except ConnectionResetError:
-                print(f"[DISCONNECT] Client {address} disconnected")
-                print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 2}")
-                communication_socket.close()
-                exit()
+    message = ""
+    receive_message = True
+    while receive_message:
+        #receive 20 bytes
+        try:
+            bytes = communication_socket.recv(20)
+        except ConnectionResetError:
+            print(f"[DISCONNECT] Client {address} disconnected")
+            print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 2}")
+            communication_socket.close()
+            exit()
 
-            # decode the bytes to utf-8 and search for newline-sign
-            bytes_decoded = bytes.decode("utf-8")
-            for sign in bytes_decoded:
-                if sign == "\n":
-                    bytes_decoded = bytes_decoded[:-1]
-                    receive_message = False
-            message += bytes_decoded
-        return message
+        # decode the bytes to utf-8 and search for newline-sign
+        bytes_decoded = bytes.decode("utf-8")
+        for sign in bytes_decoded:
+            if sign == "\n":
+                bytes_decoded = bytes_decoded[:-1]
+                receive_message = False
+        message += bytes_decoded
+    return message
 
 
 def send_message(message_decoded, communication_socket):
-        message = (message_decoded + "\n").encode()
-        communication_socket.sendall(message)
+    # convert message into a byte-object
+    message_encoded = message_decoded.encode("utf-8")
+
+    # send 20 byte 
+    # this byte object contains 20 integer digits
+    # this in turn contains a number that indicates the length of the following message
+    # eg. b"                  12"
+    # the example is 20 bytes long because each digit is one byte in size
+    # digits 1 to 9 are ASCII - characters
+    # UTF-8 is congruent with ASCII in the first 128 characters (indices 0–127)
+    # 128 = 2^7 corresponds to 8 bit (1 byte)
+    communication_socket.sendall(b"%20d" % len(message_encoded))
+    communication_socket.sendall(message_encoded)
 
 
 def main():
