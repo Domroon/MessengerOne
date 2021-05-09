@@ -44,10 +44,6 @@ class Server:
 class Client:
     def __init__(self):
         self.communication_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-         
-    def send_message(self, message_decoded):
-        message = (message_decoded + "\n").encode()
-        self.communication_socket.sendall(message)
 
     def start(self):
         print("[STARTING] Client is starting ... ")
@@ -76,9 +72,9 @@ class Client:
         # User can send messages
         while True:
             user_message = input()
-            self.send_message(user_message)
+            send_message(user_message, self.communication_socket)
             if user_message == 'q':
-                self.send_message("!DISCONNECT")
+                send_message("!DISCONNECT", self.communication_socket)
                 print(receive_message(self.communication_socket, (ip_address, port)))
                 break
         
