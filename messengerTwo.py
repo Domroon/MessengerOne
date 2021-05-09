@@ -9,7 +9,39 @@ class Server:
         # self.connections = []
         # self.messages = []
 
-    def receive_message(self, communication_socket, address):
+    def start(self):
+        print("[STARTING] Server is starting ... ")
+        self.connection_socket.bind((self.ip_address, self.port))
+
+        self.connection_socket.listen()
+        print(f"[LISTENING] Server is listening on {self.ip_address}:{self.port}")
+
+        # waiting for new connections
+        # each connection will have its own communication_socket in a seperate Thread
+        while True:
+            communication_socket, address = self.connection_socket.accept()
+            print(f"[NEW CONNECTION] Connected with {address}")
+            thread = threading.Thread(target=self.handle_client, args=(communication_socket, address))
+            thread.start()
+            print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
+
+    def handle_client(self, communication_socket, address):
+        # Server sending the welcome message
+        send_message("[SERVER] Welcome to the Server!", communication_socket)
+
+        # Server receive messages from this client
+        while True:
+            client_message = receive_message(communication_socket, address)
+            if client_message == "!DISCONNECT":
+                print(f"[DISCONNECT] Client {address} disconnected")
+                send_message("[SERVER] Bye! We hope to see you again soon :)", communication_socket)
+                print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 2}")
+                communication_socket.close()
+                exit()
+            print(f"[RECEIVE] from {address}: {client_message}")
+
+
+def receive_message(communication_socket, address):
         message = ""
         receive_message = True
         while receive_message:
@@ -30,37 +62,6 @@ class Server:
                     receive_message = False
             message += bytes_decoded
         return message
-
-    def start(self):
-        print("[STARTING] Server is starting ... ")
-        self.connection_socket.bind((self.ip_address, self.port))
-
-        self.connection_socket.listen()
-        print(f"[LISTENING] Server is listening on {self.ip_address}:{self.port}")
-
-        # waiting for new connections
-        # each connection will have its own communication_socket in a seperate Thread
-        while True:
-            communication_socket, address = self.connection_socket.accept()
-            print(f"[NEW CONNECTION] Connected with {address}")
-            thread = threading.Thread(target=self.handle_client, args=(communication_socket, address))
-            thread.start()
-            print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
-
-    def handle_client(communication_socket, address):
-        # Server sending the welcome message
-        send_message("[SERVER] Welcome to the Server!", communication_socket)
-
-        # Server receive messages from this client
-        while True:
-            client_message = self.receive_message(communication_socket, address)
-            if client_message == "!DISCONNECT":
-                print(f"[DISCONNECT] Client {address} disconnected")
-                send_message("[SERVER] Bye! We hope to see you again soon :)", communication_socket)
-                print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 2}")
-                communication_socket.close()
-                exit()
-            print(f"[RECEIVE] from {address}: {client_message}")
 
 
 def send_message(message_decoded, communication_socket):
