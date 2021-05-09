@@ -31,10 +31,6 @@ class Server:
             message += bytes_decoded
         return message
 
-    def send_message(self, message_decoded, communication_socket):
-        message = (message_decoded + "\n").encode()
-        communication_socket.sendall(message)
-
     def start(self):
         print("[STARTING] Server is starting ... ")
         self.connection_socket.bind((self.ip_address, self.port))
@@ -51,20 +47,25 @@ class Server:
             thread.start()
             print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
 
-    def handle_client(self, communication_socket, address):
+    def handle_client(communication_socket, address):
         # Server sending the welcome message
-        self.send_message("[SERVER] Welcome to the Server!", communication_socket)
+        send_message("[SERVER] Welcome to the Server!", communication_socket)
 
         # Server receive messages from this client
         while True:
             client_message = self.receive_message(communication_socket, address)
             if client_message == "!DISCONNECT":
                 print(f"[DISCONNECT] Client {address} disconnected")
-                self.send_message("[SERVER] Bye! We hope to see you again soon :)", communication_socket)
+                send_message("[SERVER] Bye! We hope to see you again soon :)", communication_socket)
                 print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 2}")
                 communication_socket.close()
                 exit()
             print(f"[RECEIVE] from {address}: {client_message}")
+
+
+def send_message(message_decoded, communication_socket):
+        message = (message_decoded + "\n").encode()
+        communication_socket.sendall(message)
 
 
 class Client:
