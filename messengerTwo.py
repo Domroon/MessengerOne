@@ -91,27 +91,21 @@ class Client:
             exit()
 
 
-def receive_message(communication_socket, address):
-    message = ""
-    receive_message = True
-    while receive_message:
-        #receive 20 bytes
-        try:
-            bytes = communication_socket.recv(20)
-        except ConnectionResetError:
-            print(f"[DISCONNECT] Client {address} disconnected")
-            print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 2}")
-            communication_socket.close()
-            exit()
+def recv_all(communication_socket, length):
+    result = []
+    while length > 0:
+        data = communication_socket.recv(min(4096, length))
+        result.append(data)
+        length -= len(data)
+    return b"".join(result)
 
-        # decode the bytes to utf-8 and search for newline-sign
-        bytes_decoded = bytes.decode("utf-8")
-        for sign in bytes_decoded:
-            if sign == "\n":
-                bytes_decoded = bytes_decoded[:-1]
-                receive_message = False
-        message += bytes_decoded
-    return message
+
+def receive_message(communication_socket, address):
+    # first: receive message-length
+    length = int(recv_all(communication_socket, 20))
+
+    # second: receive the message
+    return recv_all(communication_socket, length).decode("utf-8")
 
 
 def send_message(message_decoded, communication_socket):
@@ -143,3 +137,27 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+"""
+message = ""
+    receive_message = True
+    while receive_message:
+        #receive 20 bytes
+        try:
+            bytes = communication_socket.recv(20)
+        except ConnectionResetError:
+            print(f"[DISCONNECT] Client {address} disconnected")
+            print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 2}")
+            communication_socket.close()
+            exit()
+
+        # decode the bytes to utf-8 and search for newline-sign
+        bytes_decoded = bytes.decode("utf-8")
+        for sign in bytes_decoded:
+            if sign == "\n":
+                bytes_decoded = bytes_decoded[:-1]
+                receive_message = False
+        message += bytes_decoded
+    return message
+"""
