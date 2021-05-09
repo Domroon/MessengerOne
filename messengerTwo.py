@@ -31,14 +31,25 @@ class Server:
 
         # Server receive messages from this client
         while True:
-            client_message = receive_message(communication_socket, address)
+            try:
+                client_message = receive_message(communication_socket, address)
+            except ConnectionResetError:
+                self.disconnect_client(communication_socket, address)
+
             if client_message == "!DISCONNECT":
-                print(f"[DISCONNECT] Client {address} disconnected")
-                send_message("[SERVER] Bye! We hope to see you again soon :)", communication_socket)
-                print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 2}")
-                communication_socket.close()
-                exit()
+                self.disconnect_client(communication_socket, address)
+
             print(f"[RECEIVE] from {address}: {client_message}")
+    
+    def disconnect_client(self, communication_socket, address):
+        print(f"[DISCONNECT] Client {address} disconnected")
+        try:
+            send_message("[SERVER] Bye! We hope to see you again soon :)", communication_socket)
+        except ConnectionResetError:
+            pass
+        print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 2}")
+        communication_socket.close()
+        return exit()
 
 
 class Client:
