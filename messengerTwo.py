@@ -27,6 +27,7 @@ class Server:
             print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
 
     def handle_client(self, communication_socket, address):
+        nickname = None
         # Server receive messages and commands from this client
         while True:
             try:
@@ -41,9 +42,11 @@ class Server:
                 self.disconnect_client(communication_socket, address)
             elif client_message == "!MESSAGES":
                 send_message("TEST", communication_socket)
-            
+            elif client_message == "!NICKNAME":
+                nickname = receive_message(communication_socket, address)
+            else:
             # Messages
-            print(f"[RECEIVE] from {address}: {client_message}")
+                print(f"[RECEIVE] from {address}: '{nickname}: {client_message}'")
     
     def disconnect_client(self, communication_socket, address):
         print(f"[DISCONNECT] Client {address} disconnected")
@@ -60,9 +63,11 @@ class Client:
     def __init__(self):
         self.communication_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.user_queue_outlet = []
+        self.nickname = None
 
     def start(self):
         print("[STARTING] Client is starting ... ")
+        self.nickname = input("Nickname: ")
 
         ip_address = input("IP Address: ")
         port = int(input("Port: "))
@@ -71,6 +76,9 @@ class Client:
 
         # Receiving Welcome Message
         self.welcome_request(ip_address, port)
+
+        # send the nickname
+        self.send_nickname()
 
         # start a new thread for communication with the server
         thread = threading.Thread(target=self.handle_communication, args=(ip_address, port))
@@ -81,7 +89,7 @@ class Client:
             if threading.active_count() - 1 == 0:
                 break
             user_input = input()
-            if user_input in ["!WELCOME", "!DISCONNECT", "!MESSAGES"]:
+            if user_input in ["!WELCOME", "!DISCONNECT", "!MESSAGES", "!NICKNAME"]:
                 print("User cant't send commands manually.")
             else:
                 self.user_queue_outlet.append(user_input)
@@ -131,6 +139,10 @@ class Client:
         send_message("!WELCOME", self.communication_socket)
         print(receive_message(self.communication_socket, (ip_address, port)))
         print(f"[CONNECTED] Connected with server ('{ip_address}':{port})")
+
+    def send_nickname(self):
+        send_message("!NICKNAME", self.communication_socket)
+        send_message(self.nickname, self.communication_socket)
 
     def connect(self, ip_address, port):
         while True:
