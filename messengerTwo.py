@@ -7,8 +7,7 @@ class Server:
         self.connection_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.ip_address = socket.gethostbyname(socket.gethostname())
         self.port = 50500
-        # self.connections = []
-        # self.messages = []
+        self.chat_history = []
 
     def start(self):
         print("[STARTING] Server is starting ... ")
@@ -44,9 +43,14 @@ class Server:
                 send_message("TEST", communication_socket)
             elif client_message == "!NICKNAME":
                 nickname = receive_message(communication_socket, address)
+            elif client_message == "!CHAT_HISTORY":
+                send_message(len(self.chat_history), communication_socket)
+                for message in self.chat_history:
+                    send_message(message, communication_socket)
             else:
             # Messages
                 print(f"[RECEIVE] from {address}: '{nickname}: {client_message}'")
+                self.chat_history.append(f"{nickname}: {client_message}")
     
     def disconnect_client(self, communication_socket, address):
         print(f"[DISCONNECT] Client {address} disconnected")
@@ -64,6 +68,7 @@ class Client:
         self.communication_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.user_queue_outlet = []
         self.nickname = None
+        self.chat_history = []
 
     def start(self):
         print("[STARTING] Client is starting ... ")
@@ -130,6 +135,15 @@ class Client:
                 exit()
             send_message(message, self.communication_socket)
         self.user_queue_outlet.clear()
+
+    def chat_history_request(self, ip_address, port):
+        pass
+        send_message("!CHAT_HISTORY", self.communication_socket)
+        messages_number = receive_message(self.communication_socket, (ip_address, port))
+        for i in range(0, messages_number):
+            message = receive_message(self.communication_socket, (ip_address, port))
+            self.chat_history.append(message)
+            i += 1
 
     def messages_request(self, ip_address, port):
         send_message("!MESSAGES", self.communication_socket)
