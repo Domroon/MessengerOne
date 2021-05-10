@@ -40,11 +40,12 @@ class Server:
             elif client_message == "!DISCONNECT":
                 self.disconnect_client(communication_socket, address)
             elif client_message == "!MESSAGES":
-                send_message("TEST", communication_socket)
+                pass
+                #send_message("TEST", communication_socket)
             elif client_message == "!NICKNAME":
                 nickname = receive_message(communication_socket, address)
             elif client_message == "!CHAT_HISTORY":
-                send_message(len(self.chat_history), communication_socket)
+                send_message(f"{len(self.chat_history)}", communication_socket)
                 for message in self.chat_history:
                     send_message(message, communication_socket)
             else:
@@ -100,13 +101,14 @@ class Client:
                 self.user_queue_outlet.append(user_input)
     
     def handle_communication(self, ip_address, port):
-        print("Thread started!!")
-        print(f"IP: {ip_address}")
-        print(f"port: {port}")
+        # server should send the whole chat-history at joining
+        self.chat_history_request(ip_address, port)
+        self.print_chat_history()
+
         while True:
             try:
                 self.send_user_queue_outlet(ip_address, port)
-                self.messages_request(ip_address, port)
+                # self.messages_request(ip_address, port)
             except ConnectionResetError:
                     self.communication_socket.close()
                     print("Connection to the server was disconnected")
@@ -137,13 +139,16 @@ class Client:
         self.user_queue_outlet.clear()
 
     def chat_history_request(self, ip_address, port):
-        pass
         send_message("!CHAT_HISTORY", self.communication_socket)
-        messages_number = receive_message(self.communication_socket, (ip_address, port))
+        messages_number = int(receive_message(self.communication_socket, (ip_address, port)))
         for i in range(0, messages_number):
             message = receive_message(self.communication_socket, (ip_address, port))
             self.chat_history.append(message)
             i += 1
+
+    def print_chat_history(self):
+        for message in self.chat_history:
+            print(message)
 
     def messages_request(self, ip_address, port):
         send_message("!MESSAGES", self.communication_socket)
