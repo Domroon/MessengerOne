@@ -1,5 +1,6 @@
 import socket
 import threading 
+import time
 
 class Server:
     def __init__(self):
@@ -55,6 +56,7 @@ class Server:
 class Client:
     def __init__(self):
         self.communication_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.user_queue_outlet = []
 
     def start(self):
         print("[STARTING] Client is starting ... ")
@@ -69,7 +71,14 @@ class Client:
 
         print(f"[CONNECTED] Connected with server ('{ip_address}':{port})")
 
+        # start a new thread for communication with the server
+        thread = threading.Thread(target=self.handle_communication, args=(ip_address, port))
+        thread.start()
+
         # User can add messages to the messages queue
+        while True:
+            self.user_queue_outlet.append(input())
+    '''
         while True:
             try:
                 user_message = input()
@@ -87,11 +96,31 @@ class Client:
                 print(f"[CONNECTED] Connected with server ('{ip_address}':{port})")
                 
         self.communication_socket.close()
+    '''
+    def handle_communication(self, ip_address, port):
+        print("Thread started!!")
+        print(f"IP: {ip_address}")
+        print(f"port: {port}")
+        self.user_queue_outlet.append("Test")
+        while True:
+            for message in self.user_queue_outlet:
+                try:
+                    if message == 'q':
+                        send_message("!DISCONNECT", self.communication_socket)
+                        print(receive_message(self.communication_socket, (ip_address, port)))
+                        self.communication_socket.close()
+                        exit()
+                    send_message(message, self.communication_socket)
+                except ConnectionResetError:
+                    self.communication_socket.close()
+                    print("Connection to the server was disconnected")
+                    self.user_query()
+                    self.communication_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    self.connect(ip_address, port)
+                    print(f"[CONNECTED] Connected with server ('{ip_address}':{port})")
+            self.user_queue_outlet.clear()
+            time.sleep(1)
 
-    def handle_communication(self):
-        pass
-        # that should run in a separate thread 
-        # get the message_queue_outlet (attribute from client?)
         # send alle messages in this queue
         # send the command-message: !MESSAGES 
         # send the length of the "chat_history" (contains the whole chat_history (attribute from client?))
