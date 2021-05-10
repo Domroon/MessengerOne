@@ -69,7 +69,7 @@ class Client:
 
         print(f"[CONNECTED] Connected with server ('{ip_address}':{port})")
 
-        # User can send messages
+        # User can add messages to the messages queue
         while True:
             try:
                 user_message = input()
@@ -87,6 +87,19 @@ class Client:
                 print(f"[CONNECTED] Connected with server ('{ip_address}':{port})")
                 
         self.communication_socket.close()
+
+    def handle_communication(self):
+        pass
+        # that should run in a separate thread 
+        # get the message_queue_outlet (attribute from client?)
+        # send alle messages in this queue
+        # send the command-message: !MESSAGES 
+        # send the length of the "chat_history" (contains the whole chat_history (attribute from client?))
+        # receive the number of messages that are missing
+        # (this number ensures that all messages arrive) (client should count incoming messages)
+        # receive all messages that are missing in the chat_history (if number of messages that are missing is 0 then dont wait for messages!)
+        # wait a second
+        # start over
 
     def connect(self, ip_address, port):
         while True:
@@ -146,6 +159,19 @@ def send_message(message_decoded, communication_socket):
     communication_socket.sendall(message_encoded)
 
 
+def add_to_queue():
+    queue = []
+    while True:
+        user_input = input("message: ")
+        if user_input == 'send':
+            for message in queue:
+                print(message)
+            break
+        elif user_input == 'q':
+            exit()
+        queue.append(user_input)
+
+
 def main():
     print("1 - SERVER \n2 - CLIENT \n")
     user_input = input()
@@ -155,6 +181,10 @@ def main():
     if user_input == '2':
         client = Client()
         client.start()
+    if user_input == 't':
+        while True:
+            add_to_queue()
+    
 
 
 if __name__ == '__main__':
