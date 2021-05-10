@@ -79,8 +79,12 @@ class Client:
         # User can add messages to the messages queue
         while True:
             if threading.active_count() - 1 == 0:
-                exit()
-            self.user_queue_outlet.append(input())
+                break
+            user_input = input()
+            if user_input in ["!WELCOME", "!DISCONNECT", "!MESSAGES"]:
+                print("User cant't send commands manually.")
+            else:
+                self.user_queue_outlet.append(user_input)
     
     def handle_communication(self, ip_address, port):
         print("Thread started!!")
@@ -208,9 +212,8 @@ def main():
     if user_input == '2':
         client = Client()
         client.start()
-    if user_input == 't':
-        while True:
-            add_to_queue()
+    else:
+        print("Wrong Input")
     
 
 
