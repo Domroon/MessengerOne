@@ -77,6 +77,8 @@ class Client:
 
         # User can add messages to the messages queue
         while True:
+            if threading.active_count() - 1 == 0:
+                exit()
             self.user_queue_outlet.append(input())
     '''
         while True:
@@ -101,24 +103,18 @@ class Client:
         print("Thread started!!")
         print(f"IP: {ip_address}")
         print(f"port: {port}")
-        self.user_queue_outlet.append("Test")
         while True:
-            for message in self.user_queue_outlet:
-                try:
-                    if message == 'q':
-                        send_message("!DISCONNECT", self.communication_socket)
-                        print(receive_message(self.communication_socket, (ip_address, port)))
-                        self.communication_socket.close()
-                        exit()
-                    send_message(message, self.communication_socket)
-                except ConnectionResetError:
+            try:
+                self.send_user_queue_outlet(ip_address, port)
+                send_message("!MESSAGES", self.communication_socket)
+            except ConnectionResetError:
                     self.communication_socket.close()
                     print("Connection to the server was disconnected")
                     self.user_query()
                     self.communication_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     self.connect(ip_address, port)
                     print(f"[CONNECTED] Connected with server ('{ip_address}':{port})")
-            self.user_queue_outlet.clear()
+
             time.sleep(1)
 
         # send alle messages in this queue
@@ -129,6 +125,16 @@ class Client:
         # receive all messages that are missing in the chat_history (if number of messages that are missing is 0 then dont wait for messages!)
         # wait a second
         # start over
+
+    def send_user_queue_outlet(self, ip_address, port):
+        for message in self.user_queue_outlet:
+            if message == 'q':
+                send_message("!DISCONNECT", self.communication_socket)
+                print(receive_message(self.communication_socket, (ip_address, port)))
+                self.communication_socket.close()
+                exit()
+            send_message(message, self.communication_socket)
+        self.user_queue_outlet.clear()
 
     def connect(self, ip_address, port):
         while True:
