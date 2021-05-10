@@ -27,22 +27,23 @@ class Server:
             print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
 
     def handle_client(self, communication_socket, address):
-        # Server sending the welcome message
-        send_message("[SERVER] Welcome to the Server!", communication_socket)
-
-        # Server receive messages from this client
+        # Server receive messages and commands from this client
         while True:
             try:
                 client_message = receive_message(communication_socket, address)
             except ConnectionResetError:
                 self.disconnect_client(communication_socket, address)
 
-            if client_message == "!DISCONNECT":
+            # Commands
+            if client_message == "!WELCOME":
+                send_message("[SERVER] Welcome to the Server!", communication_socket)
+            elif client_message == "!DISCONNECT":
                 self.disconnect_client(communication_socket, address)
             elif client_message == "!MESSAGES":
                 send_message("TEST", communication_socket)
-            else:
-                print(f"[RECEIVE] from {address}: {client_message}")
+            
+            # Messages
+            print(f"[RECEIVE] from {address}: {client_message}")
     
     def disconnect_client(self, communication_socket, address):
         print(f"[DISCONNECT] Client {address} disconnected")
@@ -69,9 +70,7 @@ class Client:
         self.connect(ip_address, port)
 
         # Receiving Welcome Message
-        print(receive_message(self.communication_socket, (ip_address, port)))
-
-        print(f"[CONNECTED] Connected with server ('{ip_address}':{port})")
+        self.welcome_request(ip_address, port)
 
         # start a new thread for communication with the server
         thread = threading.Thread(target=self.handle_communication, args=(ip_address, port))
@@ -123,6 +122,11 @@ class Client:
     def messages_request(self, ip_address, port):
         send_message("!MESSAGES", self.communication_socket)
         print(receive_message(self.communication_socket, (ip_address, port)))
+    
+    def welcome_request(self, ip_address, port):
+        send_message("!WELCOME", self.communication_socket)
+        print(receive_message(self.communication_socket, (ip_address, port)))
+        print(f"[CONNECTED] Connected with server ('{ip_address}':{port})")
 
     def connect(self, ip_address, port):
         while True:
