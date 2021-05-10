@@ -39,8 +39,10 @@ class Server:
 
             if client_message == "!DISCONNECT":
                 self.disconnect_client(communication_socket, address)
-
-            print(f"[RECEIVE] from {address}: {client_message}")
+            elif client_message == "!MESSAGES":
+                send_message("TEST", communication_socket)
+            else:
+                print(f"[RECEIVE] from {address}: {client_message}")
     
     def disconnect_client(self, communication_socket, address):
         print(f"[DISCONNECT] Client {address} disconnected")
@@ -80,25 +82,7 @@ class Client:
             if threading.active_count() - 1 == 0:
                 exit()
             self.user_queue_outlet.append(input())
-    '''
-        while True:
-            try:
-                user_message = input()
-                send_message(user_message, self.communication_socket)
-                if user_message == 'q':
-                    send_message("!DISCONNECT", self.communication_socket)
-                    print(receive_message(self.communication_socket, (ip_address, port)))
-                    break
-            except ConnectionResetError:
-                self.communication_socket.close()
-                print("Connection to the server was disconnected")
-                self.user_query()
-                self.communication_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self.connect(ip_address, port)
-                print(f"[CONNECTED] Connected with server ('{ip_address}':{port})")
-                
-        self.communication_socket.close()
-    '''
+    
     def handle_communication(self, ip_address, port):
         print("Thread started!!")
         print(f"IP: {ip_address}")
@@ -106,7 +90,7 @@ class Client:
         while True:
             try:
                 self.send_user_queue_outlet(ip_address, port)
-                send_message("!MESSAGES", self.communication_socket)
+                self.messages_request(ip_address, port)
             except ConnectionResetError:
                     self.communication_socket.close()
                     print("Connection to the server was disconnected")
@@ -135,6 +119,10 @@ class Client:
                 exit()
             send_message(message, self.communication_socket)
         self.user_queue_outlet.clear()
+
+    def messages_request(self, ip_address, port):
+        send_message("!MESSAGES", self.communication_socket)
+        print(receive_message(self.communication_socket, (ip_address, port)))
 
     def connect(self, ip_address, port):
         while True:
