@@ -40,23 +40,18 @@ class Server:
             elif client_message == "!DISCONNECT":
                 self.disconnect_client(communication_socket, address)
             elif client_message == "!MESSAGES":
-                client_chat_history_length = int(receive_message(communication_socket, address))
-                missing_messages_number = len(self.chat_history) - client_chat_history_length
-                if missing_messages_number == 0:
-                    send_message("No missing messages", communication_socket)
-                else:
-                    send_message(f"{missing_messages_number}", communication_socket)
-                    self.send_missing_messages(missing_messages_number, communication_socket)
+                self.handle_messages_request(communication_socket, address)
             elif client_message == "!NICKNAME":
                 nickname = receive_message(communication_socket, address)
             elif client_message == "!CHAT_HISTORY":
                 send_message(f"{len(self.chat_history)}", communication_socket)
                 for message in self.chat_history:
                     send_message(message, communication_socket)
-            else:
+            elif client_message == "!USER_MESSAGE":
             # Messages
-                print(f"[RECEIVE] from {address}: '{nickname}: {client_message}'")
-                self.chat_history.append(f"{nickname}: {client_message}")
+                message_message = receive_message(communication_socket, address)
+                print(f"[RECEIVE] from {address}: '{nickname}: {message_message}'")
+                self.chat_history.append(f"{nickname}: {message_message}")
     
     def disconnect_client(self, communication_socket, address):
         print(f"[DISCONNECT] Client {address} disconnected")
@@ -70,13 +65,27 @@ class Server:
 
     def send_missing_messages(self, missing_messages_number, communication_socket):
             # index of first missing message
-            from_index = missing_messages_number - 1
+            from_index = len(self.chat_history) - missing_messages_number
 
             # index of last missing message
             to_index = len(self.chat_history)
 
             for i in range(from_index, to_index):
                 send_message(self.chat_history[i], communication_socket)
+                #i += 1
+            #i = 0
+
+    def handle_messages_request(self, communication_socket, address):
+        # Start of Message Request
+
+        # Receive length of chat history
+        length_chat_history = int(receive_message(communication_socket, address))
+        # calculate and send number of missing messages
+        missing_messages_number = len(self.chat_history) - length_chat_history
+        send_message(str(missing_messages_number), communication_socket)
+        # if missing_message not 0: send missing messages
+        if missing_messages_number != 0:
+            self.send_missing_messages(missing_messages_number, communication_socket)
 
 
 class Client:
@@ -150,6 +159,7 @@ class Client:
                 print(receive_message(self.communication_socket, (ip_address, port)))
                 self.communication_socket.close()
                 exit()
+            send_message("!USER_MESSAGE", self.communication_socket)
             send_message(message, self.communication_socket)
         self.user_queue_outlet.clear()
 
@@ -167,19 +177,27 @@ class Client:
 
     def messages_request(self, ip_address, port):
         send_message("!MESSAGES", self.communication_socket)
-        send_message(f"{len(self.chat_history)}", self.communication_socket)
-        missing_messages = receive_message(self.communication_socket, (ip_address, port))
-        if missing_messages != "No missing messages":
-            missing_messages_number = int(missing_messages)
 
-        if missing_messages != "No missing messages":
-            for i in range(0, missing_messages_number):
-                message = receive_message(self.communication_socket, (ip_address, port))
-                self.chat_history.append(message)
-                print(message)
-                i += 1
-            # print(receive_message(self.communication_socket, (ip_address, port)))
+        # Start of Message Request
+
+        # Send length of chat history
+        send_message(f"{len(self.chat_history)}", self.communication_socket)
+        # Receive number of missing messaged
+        missing_messages_number = int(receive_message(self.communication_socket, (ip_address, port)))
+        print(missing_messages_number) # for testing
+        # if missing_messages not 0: receive messages, then save in chat_history and print
+        if missing_messages_number != 0:
+            self.receive_missing_messages(missing_messages_number, ip_address, port)
     
+    def receive_missing_messages(self, missing_messages_number, ip_address, port):
+        for i in range(0, missing_messages_number):
+            message = receive_message(self.communication_socket, (ip_address, port))
+            self.chat_history.append(message)
+            # i += 1
+            # message = "NOTHING!!!!!"
+
+        print(self.chat_history)
+
     def welcome_request(self, ip_address, port):
         send_message("!WELCOME", self.communication_socket)
         print(receive_message(self.communication_socket, (ip_address, port)))
