@@ -72,8 +72,6 @@ class Server:
 
             for i in range(from_index, to_index):
                 send_message(self.chat_history[i], communication_socket)
-                #i += 1
-            #i = 0
 
     def handle_messages_request(self, communication_socket, address):
         # Start of Message Request
@@ -184,7 +182,6 @@ class Client:
         send_message(f"{len(self.chat_history)}", self.communication_socket)
         # Receive number of missing messaged
         missing_messages_number = int(receive_message(self.communication_socket, (ip_address, port)))
-        print(missing_messages_number) # for testing
         # if missing_messages not 0: receive messages, then save in chat_history and print
         if missing_messages_number != 0:
             self.receive_missing_messages(missing_messages_number, ip_address, port)
@@ -193,10 +190,7 @@ class Client:
         for i in range(0, missing_messages_number):
             message = receive_message(self.communication_socket, (ip_address, port))
             self.chat_history.append(message)
-            # i += 1
-            # message = "NOTHING!!!!!"
-
-        print(self.chat_history)
+            print(message)
 
     def welcome_request(self, ip_address, port):
         send_message("!WELCOME", self.communication_socket)
