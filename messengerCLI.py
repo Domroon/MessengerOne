@@ -115,7 +115,7 @@ class Client:
             if threading.active_count() - 1 == 0:
                 break
             user_input = input()
-            if user_input in ["!WELCOME", "!DISCONNECT", "!MESSAGES", "!NICKNAME"]:
+            if user_input in ["!WELCOME", "!DISCONNECT", "!MESSAGES", "!NICKNAME", "!CHAT_HISTORY", "!USER_MESSAGE"]:
                 print("User cant't send commands manually.")
             else:
                 self.user_queue_outlet.append(user_input)
