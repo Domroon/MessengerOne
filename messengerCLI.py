@@ -32,13 +32,13 @@ class Server:
             try:
                 client_message = receive_message(communication_socket, address)
             except ConnectionResetError:
-                self.disconnect_client(communication_socket, address)
+                self.handle_disconnect_request(communication_socket, address)
 
             # Commands
             if client_message == "!WELCOME":
                 send_message("[SERVER] Welcome to the Server!", communication_socket)
             elif client_message == "!DISCONNECT":
-                self.disconnect_client(communication_socket, address)
+                self.handle_disconnect_request(communication_socket, address)
             elif client_message == "!MESSAGES":
                 self.handle_messages_request(communication_socket, address)
             elif client_message == "!NICKNAME":
@@ -53,7 +53,7 @@ class Server:
                 print(f"[RECEIVE] from {address}: '{nickname}: {message_message}'")
                 self.chat_history.append(f"{nickname}: {message_message}")
     
-    def disconnect_client(self, communication_socket, address):
+    def handle_disconnect_request(self, communication_socket, address):
         print(f"[DISCONNECT] Client {address} disconnected")
         try:
             send_message("[SERVER] Bye! We hope to see you again soon :)", communication_socket)
@@ -87,29 +87,27 @@ class Server:
 
 
 class Client:
-    def __init__(self):
+    def __init__(self, server_ip_address, server_port, nickname):
         self.communication_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_ip_address = server_ip_address
+        self.server_port = server_port
+        self.nickname = nickname
         self.user_queue_outlet = []
-        self.nickname = None
         self.chat_history = []
 
     def start(self):
         print("[STARTING] Client is starting ... ")
-        self.nickname = input("Nickname: ")
 
-        ip_address = input("IP Address: ")
-        port = int(input("Port: "))
-
-        self.connect(ip_address, port)
+        self.connect()
 
         # Receiving Welcome Message
-        self.welcome_request(ip_address, port)
+        self.welcome_request()
 
         # send the nickname
-        self.send_nickname()
+        self.send_nickname_request()
 
         # start a new thread for communication with the server
-        thread = threading.Thread(target=self.handle_communication, args=(ip_address, port))
+        thread = threading.Thread(target=self.handle_communication)
         thread.start()
 
         # User can add messages to the messages queue
@@ -122,50 +120,41 @@ class Client:
             else:
                 self.user_queue_outlet.append(user_input)
     
-    def handle_communication(self, ip_address, port):
+    def handle_communication(self):
         # server should send the whole chat-history at joining
-        self.chat_history_request(ip_address, port)
+        self.chat_history_request()
         self.print_chat_history()
 
         while True:
             try:
-                self.send_user_queue_outlet(ip_address, port)
-                self.messages_request(ip_address, port)
+                self.send_user_queue_outlet()
+                self.messages_request()
             except ConnectionResetError:
                     self.communication_socket.close()
                     print("Connection to the server was disconnected")
                     self.user_query()
                     self.communication_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    self.connect(ip_address, port)
-                    print(f"[CONNECTED] Connected with server ('{ip_address}':{port})")
+                    self.connect()
+                    print(f"[CONNECTED] Connected with server ('{self.server_ip_address}':{self.server_port})")
 
             time.sleep(1)
 
-        # send alle messages in this queue
-        # send the command-message: !MESSAGES 
-        # send the length of the "chat_history" (contains the whole chat_history (attribute from client?))
-        # receive the number of messages that are missing
-        # (this number ensures that all messages arrive) (client should count incoming messages)
-        # receive all messages that are missing in the chat_history (if number of messages that are missing is 0 then dont wait for messages!)
-        # wait a second
-        # start over
-
-    def send_user_queue_outlet(self, ip_address, port):
+    def send_user_queue_outlet(self):
         for message in self.user_queue_outlet:
             if message == 'q':
                 send_message("!DISCONNECT", self.communication_socket)
-                print(receive_message(self.communication_socket, (ip_address, port)))
+                print(receive_message(self.communication_socket, (self.server_ip_address, self.server_port)))
                 self.communication_socket.close()
                 exit()
             send_message("!USER_MESSAGE", self.communication_socket)
             send_message(message, self.communication_socket)
         self.user_queue_outlet.clear()
 
-    def chat_history_request(self, ip_address, port):
+    def chat_history_request(self):
         send_message("!CHAT_HISTORY", self.communication_socket)
-        messages_number = int(receive_message(self.communication_socket, (ip_address, port)))
+        messages_number = int(receive_message(self.communication_socket, (self.server_ip_address, self.server_port)))
         for i in range(0, messages_number):
-            message = receive_message(self.communication_socket, (ip_address, port))
+            message = receive_message(self.communication_socket, (self.server_ip_address, self.server_port))
             self.chat_history.append(message)
             i += 1
 
@@ -173,7 +162,7 @@ class Client:
         for message in self.chat_history:
             print(message)
 
-    def messages_request(self, ip_address, port):
+    def messages_request(self):
         send_message("!MESSAGES", self.communication_socket)
 
         # Start of Message Request
@@ -181,10 +170,10 @@ class Client:
         # Send length of chat history
         send_message(f"{len(self.chat_history)}", self.communication_socket)
         # Receive number of missing messaged
-        missing_messages_number = int(receive_message(self.communication_socket, (ip_address, port)))
+        missing_messages_number = int(receive_message(self.communication_socket, (self.server_ip_address, self.server_port)))
         # if missing_messages not 0: receive messages, then save in chat_history and print
         if missing_messages_number != 0:
-            self.receive_missing_messages(missing_messages_number, ip_address, port)
+            self.receive_missing_messages(missing_messages_number, self.server_ip_address, self.server_port)
     
     def receive_missing_messages(self, missing_messages_number, ip_address, port):
         for i in range(0, missing_messages_number):
@@ -192,27 +181,27 @@ class Client:
             self.chat_history.append(message)
             print(message)
 
-    def welcome_request(self, ip_address, port):
+    def welcome_request(self):
         send_message("!WELCOME", self.communication_socket)
-        print(receive_message(self.communication_socket, (ip_address, port)))
-        print(f"[CONNECTED] Connected with server ('{ip_address}':{port})")
+        print(receive_message(self.communication_socket, (self.server_ip_address, self.server_port)))
+        print(f"[CONNECTED] Connected with server ('{self.server_ip_address}':{self.server_port})")
 
-    def send_nickname(self):
+    def send_nickname_request(self):
         send_message("!NICKNAME", self.communication_socket)
         send_message(self.nickname, self.communication_socket)
 
-    def connect(self, ip_address, port):
+    def connect(self):
         while True:
             try:
-                self.communication_socket.connect((ip_address, port))
+                self.communication_socket.connect((self.server_ip_address, self.server_port))
                 break
             except TimeoutError:
-                print(f"\nCant't connect to {ip_address}:{port}")
+                print(f"\nCant't connect to {self.server_ip_address}:{self.server_port}")
                 print("The server is probably not online.")
                 self.user_query()
             except ConnectionRefusedError:
-                print(f"\nI can connect to {ip_address},")
-                print(f"but no server is listening on port {port}")
+                print(f"\nI can connect to {self.server_ip_address},")
+                print(f"but no server is listening on port {self.server_port}")
                 self.user_query()
 
     def user_query(self):
@@ -279,12 +268,16 @@ def main():
         server = Server()
         server.start()
     if user_input == '2':
-        client = Client()
+        ip_address = input("IP Address: ")
+        port = int(input("Port: "))
+        nickname = input("Nickname: ")
+
+        client = Client(ip_address, port, nickname)
         client.start()
     else:
         print("Wrong Input")
     
-
+    
 
 if __name__ == '__main__':
     main()
